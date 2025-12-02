@@ -4,6 +4,8 @@ import json
 from functools import wraps
 from monitor import *
 
+## ANCIEN CODE AVANT LA BASE DE DONNEES AVEC JSON, A GARDER POUR REFERENCE ##
+
 def load_datas(func):
     @wraps(func)
     def wrapper(*args, **kwargs):

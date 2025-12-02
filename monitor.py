@@ -1,6 +1,7 @@
 from pydantic import BaseModel,computed_field
 import os,json,re,requests
 
+## ANCIEN CODE AVANT LA BASE DE DONNEES AVEC JSON, A GARDER POUR REFERENCE ##
 
 # Regex nécéssaires au programme
 cpu_model_regex = re.compile(r"model name.*: (?P<model>.*)")
