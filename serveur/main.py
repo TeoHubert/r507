@@ -2,7 +2,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 import json
 from models.host import *
-#from models.action import *
+from models.action import *
+from models.indicator import *
 from database import configure_db, engine
 from sqlmodel import Session, select
 
@@ -52,3 +53,24 @@ def update_host(host_id: int, updated_host: Host) -> Host:
         session.commit()
         session.refresh(host)
         return host
+
+@app.get("/actions")
+def get_actions() -> list[Action]:
+    with Session(engine) as session:
+        actions = session.exec(select(Action)).all()
+        return actions
+    
+@app.get("/action/{action_id}")
+def get_action(action_id: int) -> Action:
+    with Session(engine) as session:
+        action = session.get(Action, action_id)
+        if not action: raise HTTPException(status_code=404, detail="Action not found")
+        return action
+    
+@app.post("/action")
+def create_action(action: Action) -> Action:
+    with Session(engine) as session:
+        session.add(action)
+        session.commit()
+        session.refresh(action)
+        return action
