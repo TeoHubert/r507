@@ -95,3 +95,31 @@ def update_action(action_id: int, updated_action: Action) -> Action:
         session.commit()
         session.refresh(action)
         return action
+    
+
+
+
+### Endpoints pour les indicateurs ###
+@app.get("/host/{host_id}/indicators")
+def get_host_indicators(host_id: int) -> list[Indicator]:
+    with Session(engine) as session:
+        indicators = session.exec(select(Indicator).where(Indicator.host_id == host_id)).all()
+        return indicators
+    
+@app.post("/host/{host_id}/indicator")
+def create_host_indicator(host_id: int, indicator: Indicator) -> Indicator:
+    with Session(engine) as session:
+        indicator.host_id = host_id
+        session.add(indicator)
+        session.commit()
+        session.refresh(indicator)
+        return indicator
+    
+@app.delete("/indicator/{indicator_id}")
+def delete_indicator(indicator_id: int) -> dict:
+    with Session(engine) as session:
+        indicator = session.get(Indicator, indicator_id)
+        if not indicator: raise HTTPException(status_code=404, detail="Indicator not found")
+        session.delete(indicator)
+        session.commit()
+        return {"ok": True}
