@@ -116,7 +116,8 @@ def create_host_indicator(host_id: int, indicator: Indicator) -> Indicator:
         return indicator
     
 @app.delete("/indicator/{indicator_id}")
-def delete_indicator(indicator_id: int) -> dict:
+@app.delete("/host/{host_id}/indicator/{indicator_id}")
+def delete_indicator(host_id: int, indicator_id: int) -> dict:
     with Session(engine) as session:
         indicator = session.get(Indicator, indicator_id)
         if not indicator: raise HTTPException(status_code=404, detail="Indicator not found")
