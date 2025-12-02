@@ -83,3 +83,15 @@ def delete_action(action_id: int) -> dict:
         session.delete(action)
         session.commit()
         return {"ok": True}
+    
+@app.put("/action/{action_id}")
+def update_action(action_id: int, updated_action: Action) -> Action:
+    with Session(engine) as session:
+        action = session.get(Action, action_id)
+        if not action: raise HTTPException(status_code=404, detail="Action not found")
+        action.name = updated_action.name
+        action.script_path = updated_action.script_path
+        session.add(action)
+        session.commit()
+        session.refresh(action)
+        return action
