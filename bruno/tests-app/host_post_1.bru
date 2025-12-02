@@ -1,0 +1,18 @@
+meta {
+  name: Host POST 1
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{serveur}}/host
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "TEST-EQT",
+    "ip": "127.0.0.1"
+  }
+}
