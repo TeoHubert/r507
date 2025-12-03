@@ -1,0 +1,7 @@
+fastapi
+modelsql
+uvicorn
+pydantic
+sqlalchemy
+requests
+json
