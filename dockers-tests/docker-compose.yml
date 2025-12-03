@@ -1,9 +1,0 @@
-version: '3.8'
-
-services:
-  host-a-superviser:
-    image: alpine:3.18
-    container_name: host-a-superviser
-    restart: unless-stopped
-    ports:
-      - "2222:22"

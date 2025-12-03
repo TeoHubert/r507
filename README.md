@@ -31,10 +31,20 @@ pip install -r {source_du_projet}/serveur/requirements.txt
 
 Exemple général sous linux :
 ```bash
-cd {source_du_projet}/serveur/
+cd {source_du_projet}/serveur/app
 python -m uvicon main:app --reload
 ```
 
+
+### Informations utiles
+
+**Le chiffrement des mots de passes :**
+Pour des raisons de "sécurité", les mots de passes SSH sont chiffré lors de leurs stockages dans la base et sont déchiffré à l'utilisation de la connexion SSH.
+Une clé dans le fichier `serveur/app/secret.key` est automatiquement générée pour réaliser le chiffrement. Une fois générée, il faut donc la conserver pour pouvoir déchiffrer les mots de passes stockés.
+
+**Logigramme d'utilisation :**
+
+![A faire](docs/img/logigrame.png "A faire")
 
 ### Utilisation de Bruno
 Une fois une application déployée, vous pouvez utiliser bruno pour tester la réponses aux endponts.
