@@ -8,15 +8,15 @@ class Action(SQLModel, table=True):
 
     def exec_script(self) -> str:
         if not self.script_path:
-            return "No script path defined."
+            return "Aucun script_path défini pour cette action."
         try:
             module = __import__(self.script_path, fromlist=[''])
             if hasattr(module, 'run'):
                 return module.run()
             else:
-                return f"Module '{self.script_path}' does not have a 'run' function."
+                return f"Le module {self.script_path} ne possède pas de fonction 'run' nécéssaire à l'exécution."
         except ImportError as e:
-            return f"Error importing module '{self.script_path}': {e}"
+            return f"Erreur dans l'import de l'action {self.script_path}: {e}"
 
     def __str__(self):
         return f"#{self.id} | Action {self.name} de script {self.script_path}"

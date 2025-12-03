@@ -1,2 +1,2 @@
-def execu_script() -> str:
+def run() -> str:
     return "12"

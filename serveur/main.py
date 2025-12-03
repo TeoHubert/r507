@@ -4,6 +4,7 @@ import json
 from models.host import *
 from models.action import *
 from models.indicator import *
+from models.indicator_values import *
 from database import configure_db, engine
 from sqlmodel import Session, select
 
@@ -89,8 +90,8 @@ def update_action(action_id: int, updated_action: Action) -> Action:
     with Session(engine) as session:
         action = session.get(Action, action_id)
         if not action: raise HTTPException(status_code=404, detail="Action not found")
-        action.name = updated_action.name
-        action.script_path = updated_action.script_path
+        action.name = updated_action.name if updated_action.name else action.name
+        action.script_path = updated_action.script_path if updated_action.script_path else action.script_path
         session.add(action)
         session.commit()
         session.refresh(action)
@@ -117,10 +118,29 @@ def create_host_indicator(host_id: int, indicator: Indicator) -> Indicator:
     
 @app.delete("/indicator/{indicator_id}")
 @app.delete("/host/{host_id}/indicator/{indicator_id}")
-def delete_indicator(host_id: int, indicator_id: int) -> dict:
+def delete_indicator(indicator_id: int, host_id: int = None) -> dict:
     with Session(engine) as session:
         indicator = session.get(Indicator, indicator_id)
         if not indicator: raise HTTPException(status_code=404, detail="Indicator not found")
         session.delete(indicator)
         session.commit()
         return {"ok": True}
+    
+@app.post("/indicator/{indicator_id}/execute")
+@app.post("/host/{host_id}/indicator/{indicator_id}/execute")
+def execute_indicator_action(indicator_id: int, host_id: int = None) -> bool:
+    with Session(engine) as session:
+        indicator = session.get(Indicator, indicator_id)
+        if not indicator: raise HTTPException(status_code=404, detail="Indicator not found")
+        action = session.get(Action, indicator.action_id)
+        if not action: raise HTTPException(status_code=404, detail="Action not found for this indicator")
+        try:
+            result = action.exec_script()
+            indicator_value = IndicatorValue(indicator_id=indicator.id, value=result)
+            session.add(indicator_value)
+            session.commit()
+            session.refresh(indicator_value)
+            return True
+        except Exception as e:
+            print(f"Erreur lors de l'exécution de l'indicateur {indicator_id}: {e}")
+            return False
