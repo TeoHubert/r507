@@ -1,6 +1,8 @@
 # R507 
 ## Réalisation par Téo HUBERT - BUT R&T Saint Malo 3ème Année DEV CLOUD
 
+> Lien vers le dépot GITHUB : https://github.com/TeoHubert/r507
+
 ### Contexte du projet
 Réaliser un outil permettant de superviser des indicateurs (Mémoire, CPU, Disque, ...) sur différentes cibles.
 Cela doit être basé sur Python à l'aide principalement de POO, Pydantic, SQLModel, FastAPI.
