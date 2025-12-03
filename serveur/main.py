@@ -13,10 +13,10 @@ import datetime
 async def execute_indicator(indicator: Indicator) -> None:
     with Session(engine) as session:
         action = session.get(Action, indicator.action_id)
-        if not action:
-            return "Action not found"
+        if not action: return "Action de l'indicateur not found"
         try:
-            indicator_value = IndicatorValue(indicator_id=indicator.id, value=action.exec_script())
+            indicator_host = session.get(Host, indicator.host_id)
+            indicator_value = IndicatorValue(indicator_id=indicator.id, value=action.exec_script(host=indicator_host))
             session.add(indicator_value)
             session.commit()
             session.refresh(indicator_value)
@@ -31,7 +31,6 @@ async def scheduler():
                 last = session.exec(select(IndicatorValue).where(IndicatorValue.indicator_id == indicator.id)
                     .order_by(IndicatorValue.date.desc()).limit(1)).first()
                 if not last or (datetime.datetime.utcnow() - last.date) >= datetime.timedelta(seconds=indicator.interval):
-                    print("Executing indicator:", indicator)
                     await execute_indicator(indicator)
         await asyncio.sleep(10)
 
@@ -44,7 +43,7 @@ async def start_scheduler():
 async def on_start_up():
     configure_db()
 
-app = FastAPI(on_startup=[on_start_up, start_scheduler])
+app = FastAPI(on_startup=[on_start_up, start_scheduler]) ## Initialisation de l'application FastAPI ##
 
 
 @app.get("/hosts")
@@ -166,10 +165,12 @@ def execute_indicator_action(indicator_id: int, host_id: int = None) -> bool:
     with Session(engine) as session:
         indicator = session.get(Indicator, indicator_id)
         if not indicator: raise HTTPException(status_code=404, detail="Indicator not found")
+        host = session.get(Host, indicator.host_id)
+        if not host: raise HTTPException(status_code=404, detail="Host not found")
         action = session.get(Action, indicator.action_id)
         if not action: raise HTTPException(status_code=404, detail="Action not found for this indicator")
         try:
-            result = action.exec_script()
+            result = action.exec_script(host=host)
             indicator_value = IndicatorValue(indicator_id=indicator.id, value=result)
             session.add(indicator_value)
             session.commit()
@@ -187,3 +188,18 @@ def get_indicator_values(host_id: int, indicator_id: int) -> list[IndicatorValue
             raise HTTPException(status_code=404, detail="Indicator not found for this host")
         values = session.exec(select(IndicatorValue).where(IndicatorValue.indicator_id == indicator_id).order_by(IndicatorValue.date)).all()
         return values
+    
+@app.delete("/host/{host_id}/indicator/{indicator_id}/values")
+@app.delete("/indicator/{indicator_id}/values")
+def purge_indicator_values(indicator_id: int, host_id: int = None) -> dict:
+    with Session(engine) as session:
+        indicator = session.get(Indicator, indicator_id)
+        if not indicator:
+            raise HTTPException(status_code=404, detail="Indicator not found")
+        if host_id and indicator.host_id != host_id:
+            raise HTTPException(status_code=404, detail="Indicator not found for this host")
+        values = session.exec(select(IndicatorValue).where(IndicatorValue.indicator_id == indicator_id)).all()
+        for value in values:
+            session.delete(value)
+        session.commit()
+        return {"ok": True}
