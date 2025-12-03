@@ -6,6 +6,7 @@ class Indicator(SQLModel, table=True):
     host_id: Optional[int] = Field(default=None, foreign_key="host.id")
     name: str
     action_id: Optional[int] = Field(default=None, foreign_key="action.id")
+    interval: int = Field(default=60)
 
     def __str__(self):
         return f"#{self.id} | Indicator {self.name} for host_id {self.host_id}"

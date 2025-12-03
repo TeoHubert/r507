@@ -4,14 +4,48 @@ import json
 from models.host import *
 from models.action import *
 from models.indicator import *
-from models.indicator_values import *
+from models.indicator_values import IndicatorValue
 from database import configure_db, engine
 from sqlmodel import Session, select
+import asyncio
+import datetime
 
+async def execute_indicator(indicator: Indicator) -> None:
+    with Session(engine) as session:
+        action = session.get(Action, indicator.action_id)
+        if not action:
+            return "Action not found"
+        try:
+            indicator_value = IndicatorValue(indicator_id=indicator.id, value=action.exec_script())
+            session.add(indicator_value)
+            session.commit()
+            session.refresh(indicator_value)
+        except Exception as e:
+            print(f"Erreur dans l'indicateur {indicator.id}: {e}")
+
+async def scheduler():
+    while True:
+        with Session(engine) as session:
+            indicators = session.exec(select(Indicator)).all()
+            for indicator in indicators:
+                last = session.exec(select(IndicatorValue).where(IndicatorValue.indicator_id == indicator.id)
+                    .order_by(IndicatorValue.date.desc()).limit(1)).first()
+                if not last or (datetime.datetime.utcnow() - last.date) >= datetime.timedelta(seconds=indicator.interval):
+                    print("Executing indicator:", indicator)
+                    await execute_indicator(indicator)
+        await asyncio.sleep(10)
+
+async def start_scheduler():
+    asyncio.create_task(scheduler())
+
+
+
+## Gestion de la partie base de données au démarrage de l'application ##
 async def on_start_up():
     configure_db()
 
-app = FastAPI(on_startup=[on_start_up])
+app = FastAPI(on_startup=[on_start_up, start_scheduler])
+
 
 @app.get("/hosts")
 def read_hosts() -> list[Host]:
@@ -48,8 +82,8 @@ def update_host(host_id: int, updated_host: Host) -> Host:
     with Session(engine) as session:
         host = session.get(Host, host_id)
         if not host: raise HTTPException(status_code=404, detail="Host not found")
-        host.name = updated_host.name
-        host.ip = updated_host.ip
+        host.name = updated_host.name if updated_host.name else host.name
+        host.ip = updated_host.ip if updated_host.ip else host.ip
         session.add(host)
         session.commit()
         session.refresh(host)
@@ -144,3 +178,12 @@ def execute_indicator_action(indicator_id: int, host_id: int = None) -> bool:
         except Exception as e:
             print(f"Erreur lors de l'exécution de l'indicateur {indicator_id}: {e}")
             return False
+        
+@app.get("/host/{host_id}/indicator/{indicator_id}/values")
+def get_indicator_values(host_id: int, indicator_id: int) -> list[IndicatorValue]:
+    with Session(engine) as session:
+        indicator = session.get(Indicator, indicator_id)
+        if not indicator or indicator.host_id != host_id:
+            raise HTTPException(status_code=404, detail="Indicator not found for this host")
+        values = session.exec(select(IndicatorValue).where(IndicatorValue.indicator_id == indicator_id).order_by(IndicatorValue.date)).all()
+        return values
