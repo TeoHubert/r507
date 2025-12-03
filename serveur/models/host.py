@@ -5,6 +5,9 @@ class Host(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     ip: str
+    username: Optional[str] = None
+    password: Optional[str] = None
+    ssh_port: Optional[int] = 22
 
     def __str__(self):
         return f"#{self.id} | Host {self.name} d'ip {self.ip}"
