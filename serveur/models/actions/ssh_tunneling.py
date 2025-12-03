@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 class SSHTunneling(BaseModel):
     ip: str
-    port: int
+    port: int = 22
     username: str
     password: str
 
