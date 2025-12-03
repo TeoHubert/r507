@@ -1,0 +1,18 @@
+meta {
+  name: Action POST 2 - Add
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{serveur}}/action
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Get LINUX Memory",
+    "script_path": "models.actions.cpu_linux"
+  }
+}
