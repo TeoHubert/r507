@@ -9,6 +9,8 @@ from database import configure_db, engine
 from sqlmodel import Session, select
 import asyncio
 import datetime
+from tools.password_security import chiffrer_mot_de_passe
+
 
 async def execute_indicator(indicator: Indicator) -> None:
     with Session(engine) as session:
@@ -62,6 +64,7 @@ def read_host(host_id: int) -> Host:
 @app.post("/host")
 def create_host(host: Host) -> Host:
     with Session(engine) as session:
+        host.password = chiffrer_mot_de_passe(host.password)
         session.add(host)
         session.commit()
         session.refresh(host)

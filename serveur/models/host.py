@@ -1,6 +1,7 @@
 from typing import Optional
 from sqlmodel import Field, SQLModel
 import paramiko
+from tools.password_security import dechiffrer_mot_de_passe
 
 class Host(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -21,7 +22,7 @@ class Host(SQLModel, table=True):
         try:
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            client.connect(hostname=self.ip, port=self.ssh_port, username=self.username, password=self.password)
+            client.connect(hostname=self.ip, port=self.ssh_port, username=self.username, password=dechiffrer_mot_de_passe(self.password))
 
             stdin, stdout, stderr = client.exec_command(command)
             output = stdout.read().decode()
