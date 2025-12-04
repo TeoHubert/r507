@@ -244,12 +244,16 @@ host = Host(name="Server", ip="192.168.1.100", password="secret123")
 
 1. **Importer la collection :**
    - Ouvrir Bruno → "Open Collection"
+
      ![Image représentant le bouton + cliqué permettant l'accès à "Open Collection"](docs/img/bruno_open_collection.png "Accès au menu d'import d'une collection")
+
    - Sélectionner le dossier `tests/server/bruno/`
 
 2. **Configurer l'environnement :**
    - Activer l'environnement "Local APP"
+
      ![Image représentant la selection d'un environnement dans bruno](docs/img/bruno_enable_env.png "Selection d'un environnement")
+
    - Vérifier l'URL : `http://127.0.0.1:8000`
 
 3. **Tests disponibles :**
