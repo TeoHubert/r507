@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard — Exemple Bootstrap 5.3</title>
+    <meta name="description" content="Base HTML avec Bootstrap 5.3" />
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">Guardian Supervision</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-controls="navMain" aria-expanded="false" aria-label="Basculer la navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navMain">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="configuration.html">Configuration</a></li>
+                    <li class="nav-item"><a class="nav-link" href="compte.html">Compte</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container my-5">
+        <h1 class="mb-4">Configuration</h1>
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Equipement</th>
+                    <th>IP</th>
+                    <th>SSH</th>
+                    <th>Indicateurs</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="configurationTableBody">
+                <!-- Les lignes de configuration seront insérées ici dynamiquement -->
+            </tbody>
+        </table>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4">
+        <div class="container text-center">
+            <small>&copy; 2025 Guardian Supervision — Tous droits réservés</small>
+        </div>
+    </footer>
+
+    <!-- Bootstrap Bundle JS (Popper inclus) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        async function getHosts() { 
+            url = 'http://127.0.0.1:8000/hosts';
+            
+            try {
+                response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP! Statut: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error("Impossible de récupérer les hôtes:", error);
+                return [];
+            }
+        }
+
+        async function getIndicators(hostId) {
+            url = `http://127.0.0.1:8000/host/${hostId}/indicators`;
+            try {
+                response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP! Statut: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error(`Impossible de récupérer les indicateurs pour l'hôte ${hostId}:`, error);
+                return [];
+            }
+        }
+
+        (async () => {
+            const hosts = await getHosts();
+
+            for (const host of hosts) {
+                const indicators = await getIndicators(host.id);
+                const tableBody = document.getElementById('configurationTableBody');
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${host.id}</td>
+                    <td>${host.name}</td>
+                    <td>${host.ip}</td>
+                    <td>${(host.username && host.password && host.ssh_port) ? 'Oui' : 'Non'}</td>
+                    <td>${indicators.length}</td>
+                    <td><a href="configuration_edithost.html?id=${host.id}" class="btn btn-sm btn-primary">Éditer</a></td>
+                `;
+                tableBody.appendChild(row);
+            }
+        })();
+    </script>
+</body>
+</html>
