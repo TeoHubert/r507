@@ -73,7 +73,7 @@
             }
         }
 
-        async function checkIndicator(indicatorId) {
+        async function checkIndicator(indicatorId, hostId) {
             url = `http://127.0.0.1:8000/indicator/${indicatorId}/execute`;
             try {
                 response = await fetch(url, { method: 'POST' });
@@ -81,16 +81,39 @@
                     throw new Error(`Erreur HTTP! Statut: ${response.status}`);
                 }
                 alert(`Indicateur ${indicatorId} vérifié avec succès.`);
+                tbody = document.getElementById(`host-${hostId}-indicators`);
+                tbody.innerHTML = await loadIndicatorsView(hostId);
             } catch (error) {
                 console.error(`Impossible de vérifier l'indicateur ${indicatorId}:`, error);
                 alert(`Erreur lors de la vérification de l'indicateur ${indicatorId}.`);
             }
         }
 
-        (async () => {
-            const hosts = await getHosts();
+        async function loadIndicatorsView(host_Id) {
+            indicators = await getIndicators(host_Id);
+            indicatorsHtml = '';
+            for (indicator of indicators) {
+                dateISO = indicator.last_value.date;
+                dateObj = new Date(dateISO);
+                dateFrancaise = dateObj.toLocaleDateString('fr-FR') + ' ' + dateObj.toLocaleTimeString('fr-FR', {hour12: false});
+                indicatorsHtml += `
+                    <tr>
+                        <td>${indicator.name}</td>
+                        <td>${dateFrancaise}</td>
+                        <td>${indicator.last_value.value}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="checkIndicator(${indicator.id},${host_Id})">Check</button>
+                            <a class="btn btn-sm btn-outline-dark" data-bs-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">⬍</a>
+                        </td>
+                    </tr>
+                `;
+            }
+            return indicatorsHtml;
+        }
 
-            for (const host of hosts) {
+        async function loadHostsView(host_Id) {
+            hosts = await getHosts();
+            for (host of hosts) {
                 accordionItem = document.createElement('div');
                 accordionItem.className = 'accordion-item';
                 accordionItem.innerHTML = `
@@ -118,25 +141,12 @@
                 `;
                 // Ensure 'accordionMainDashboard' exists in your HTML
                 document.getElementById('accordionMainDashboard').appendChild(accordionItem);
-                const indicators = await getIndicators(host.id);
-                const tbody = document.getElementById(`host-${host.id}-indicators`);
-                for (const indicator of indicators) {
-                    const row = document.createElement('tr');
-                    const dateISO = indicator.last_value.date;
-                    const dateObj = new Date(dateISO);
-                    const dateFrancaise = dateObj.toLocaleDateString('fr-FR') + ' ' + dateObj.toLocaleTimeString('fr-FR', {hour12: false});
-                    row.innerHTML = `
-                        <td>${indicator.name}</td>
-                        <td>${dateFrancaise}</td>
-                        <td>${indicator.last_value.value}</td>
-                        <td>
-                            <button class="btn btn-sm btn-primary" onclick="checkIndicator(${indicator.id})">Check</button>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                }
+                indicators = await getIndicators(host.id);
+                tbody = document.getElementById(`host-${host.id}-indicators`);
+                tbody.innerHTML = await loadIndicatorsView(host.id);
             }
-        })();
+        }
+        loadHostsView();
     </script>
 </body>
 </html>
