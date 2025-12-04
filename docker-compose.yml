@@ -1,0 +1,18 @@
+services:
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: r507_backend
+    ports:
+      - "8000:8000"
+    
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: r507_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
