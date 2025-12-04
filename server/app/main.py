@@ -192,10 +192,11 @@ def execute_indicator_action(indicator_id: int, host_id: int = None) -> bool:
             return False
         
 @app.get("/host/{host_id}/indicator/{indicator_id}/values")
-def get_indicator_values(host_id: int, indicator_id: int) -> list[IndicatorValue]:
+@app.get("/indicator/{indicator_id}/values")
+def get_indicator_values(indicator_id: int, host_id: int = None) -> list[IndicatorValue]:
     with Session(engine) as session:
         indicator = session.get(Indicator, indicator_id)
-        if not indicator or indicator.host_id != host_id:
+        if not indicator or (host_id and indicator.host_id != host_id):
             raise HTTPException(status_code=404, detail="Indicator not found for this host")
         values = session.exec(select(IndicatorValue).where(IndicatorValue.indicator_id == indicator_id).order_by(IndicatorValue.date)).all()
         return values
