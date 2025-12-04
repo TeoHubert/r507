@@ -13,3 +13,4 @@ class IndicatorValue(SQLModel, table=True):
     
     def __repr__(self):
         return f"<IndicatorValue(id='{self.id}', indicator_id='{self.indicator_id}', value='{self.value}')>"
+    

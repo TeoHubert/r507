@@ -1,10 +1,11 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 import json
 from models.host import *
 from models.action import *
 from models.indicator import *
-from models.indicator_values import IndicatorValue
+from models.indicator_values import *
 from database import configure_db, engine
 from sqlmodel import Session, select
 import asyncio
@@ -47,6 +48,9 @@ async def on_start_up():
 
 app = FastAPI(on_startup=[on_start_up, start_scheduler]) ## Initialisation de l'application FastAPI ##
 
+origins = ["*"]
+
+app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 @app.get("/hosts")
 def read_hosts() -> list[Host]:
@@ -138,10 +142,14 @@ def update_action(action_id: int, updated_action: Action) -> Action:
 
 ### Endpoints pour les indicateurs ###
 @app.get("/host/{host_id}/indicators")
-def get_host_indicators(host_id: int) -> list[Indicator]:
+def get_host_indicators(host_id: int) -> list[IndicatorWithLastValue]:
     with Session(engine) as session:
         indicators = session.exec(select(Indicator).where(Indicator.host_id == host_id)).all()
-        return indicators
+        result_liste = []
+        for indicator in indicators:
+            last_value = session.exec(select(IndicatorValue).where(IndicatorValue.indicator_id == indicator.id).order_by(IndicatorValue.date.desc()).limit(1)).first()
+            result_liste.append(IndicatorWithLastValue(**indicator.model_dump(), last_value=last_value))
+        return result_liste
     
 @app.post("/host/{host_id}/indicator")
 def create_host_indicator(host_id: int, indicator: Indicator) -> Indicator:

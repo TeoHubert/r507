@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard — Exemple Bootstrap 5.3</title>
+    <meta name="description" content="Base HTML avec Bootstrap 5.3" />
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">Guardian Supervision</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-controls="navMain" aria-expanded="false" aria-label="Basculer la navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navMain">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link active" href="index.html">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="configuration.html">Configuration</a></li>
+                    <li class="nav-item"><a class="nav-link" href="compte.html">Compte</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container my-5">
+        <h1 class="mb-4">Bienvenue sur le Dashboard</h1>
+        <div class="accordion" id="accordionMainDashboard">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOne">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                        Serveur 1
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne">
+                    <div class="accordion-body">
+                        <table class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Indicateur</th>
+                                    <th scope="col">Il y a</th>
+                                    <th scope="col">Valeur</th>
+                                    <th scope="col"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>CPU Usage</td>
+                                    <td>5 minutes</td>
+                                    <td>45%</td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4">
+        <div class="container text-center">
+            <small>&copy; 2025 Guardian Supervision — Tous droits réservés</small>
+        </div>
+    </footer>
+
+    <!-- Bootstrap Bundle JS (Popper inclus) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        async function getHosts() { 
+            url = 'http://127.0.0.1:8000/hosts';
+            
+            try {
+                response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP! Statut: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error("Impossible de récupérer les hôtes:", error);
+                return [];
+            }
+        }
+
+        async function getIndicators(hostId) {
+            url = `http://127.0.0.1:8000/host/${hostId}/indicators`;
+            try {
+                response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP! Statut: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error(`Impossible de récupérer les indicateurs pour l'hôte ${hostId}:`, error);
+                return [];
+            }
+        }
+
+        async function checkIndicator(indicatorId) {
+            url = `http://127.0.0.1:8000/indicator/${indicatorId}/execute`;
+            try {
+                response = await fetch(url, { method: 'POST' });
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP! Statut: ${response.status}`);
+                }
+                alert(`Indicateur ${indicatorId} vérifié avec succès.`);
+            } catch (error) {
+                console.error(`Impossible de vérifier l'indicateur ${indicatorId}:`, error);
+                alert(`Erreur lors de la vérification de l'indicateur ${indicatorId}.`);
+            }
+        }
+
+        (async () => {
+            const hosts = await getHosts();
+
+            for (const host of hosts) {
+                accordionItem = document.createElement('div');
+                accordionItem.className = 'accordion-item';
+                accordionItem.innerHTML = `
+                    <h2 class="accordion-header" id="heading${host.id}">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${host.id}" aria-expanded="true" aria-controls="collapse${host.id}">
+                            ${host.name} (${host.ip})
+                        </button>
+                    </h2>
+                    <div id="collapse${host.id}" class="accordion-collapse collapse" aria-labelledby="heading${host.id}">
+                        <div class="accordion-body">
+                            <table class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Indicateur</th>
+                                        <th scope="col">Il y a</th>
+                                        <th scope="col">Valeur</th>
+                                        <th scope="col"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="host-${host.id}-indicators">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                // Ensure 'accordionMainDashboard' exists in your HTML
+                document.getElementById('accordionMainDashboard').appendChild(accordionItem);
+                const indicators = await getIndicators(host.id);
+                const tbody = document.getElementById(`host-${host.id}-indicators`);
+                for (const indicator of indicators) {
+                    const row = document.createElement('tr');
+                    const dateISO = indicator.last_value.date;
+                    const dateObj = new Date(dateISO);
+                    const dateFrancaise = dateObj.toLocaleDateString('fr-FR') + ' ' + dateObj.toLocaleTimeString('fr-FR', {hour12: false});
+                    row.innerHTML = `
+                        <td>${indicator.name}</td>
+                        <td>${dateFrancaise}</td>
+                        <td>${indicator.last_value.value}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="checkIndicator(${indicator.id})">Check</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            }
+        })();
+    </script>
+</body>
+</html>

@@ -26,14 +26,14 @@ source venv/bin/activate
 
 Exemple général sous linux :
 ```bash
-pip install -r {source_du_projet}/serveur/requirements.txt
+pip install -r {source_du_projet}/server/requirements.txt
 ```
 
 4. Lancer l'application
 
 Exemple général sous linux :
 ```bash
-cd {source_du_projet}/serveur/app
+cd {source_du_projet}/server/app
 python -m uvicon main:app --reload
 ```
 
@@ -42,7 +42,7 @@ python -m uvicon main:app --reload
 
 **Le chiffrement des mots de passes :**
 Pour des raisons de "sécurité", les mots de passes SSH sont chiffré lors de leurs stockages dans la base et sont déchiffré à l'utilisation de la connexion SSH.
-Une clé dans le fichier `serveur/app/secret.key` est automatiquement générée pour réaliser le chiffrement. Une fois générée, il faut donc la conserver pour pouvoir déchiffrer les mots de passes stockés.
+Une clé dans le fichier `server/app/secret.key` est automatiquement générée pour réaliser le chiffrement. Une fois générée, il faut donc la conserver pour pouvoir déchiffrer les mots de passes stockés.
 
 **Logigramme d'utilisation :**
 
