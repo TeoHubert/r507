@@ -5,6 +5,11 @@ class Action(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     script_path: Optional[str] = Field(default=None)
+    min_value: Optional[float] = Field(default=0)
+    max_value: Optional[float] = Field(default=100)
+    ssh_error_default_value: Optional[float] = Field(default=0)
+    unite: Optional[str] = Field(default="%")
+    rounding: Optional[int] = Field(default=2)
 
     def exec_script(self, host) -> str:
         if not self.script_path:
