@@ -75,7 +75,7 @@
                         </div>
                         <div class="mb-3">  
                             <label for="sshPassword" class="form-label">Mot de passe SSH</label>
-                            <input type="password" class="form-control" placeholder="⋅⋅⋅⋅⋅⋅⋅⋅">
+                            <input id="sshPassword" type="password" class="form-control" placeholder="⋅⋅⋅⋅⋅⋅⋅⋅">
                         </div>
                         <div class="mb-3">
                             <label for="sshPort" class="form-label">Port SSH</label>
@@ -273,6 +273,7 @@
                 if (!response.ok) {
                     throw new Error(`Erreur HTTP! Statut: ${response.status}`);
                 }
+                showToast('Succès', 'SSH de l\'Hôte mis à jour avec succès', 'success');
             } catch (error) {
                 console.error(`Impossible de mettre à jour l'hôte ${id}:`, error);
                 showToast('Erreur', 'Impossible de mettre à jour l\'hôte', 'error');

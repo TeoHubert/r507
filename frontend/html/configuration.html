@@ -7,8 +7,30 @@
     <meta name="description" content="Base HTML avec Bootstrap 5.3" />
     <!-- Bootstrap 5.3 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Importage de Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1055;
+        }
+    </style>
 </head>
 <body>
+    <!-- Toast Container -->
+    <div class="toast-container">
+        <div id="notificationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <div class="rounded me-2" style="width: 20px; height: 20px;" id="toastIcon"></div>
+                <strong class="me-auto" id="toastTitle"><!-- Titre ici --></strong>
+                <small id="toastTime"><!-- Le moment ici --></small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Fermer"></button>
+            </div>
+            <div class="toast-body" id="toastMessage"> <!-- Le Message sera ICI --> </div>
+        </div>
+    </div>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
@@ -43,6 +65,15 @@
             <tbody id="configurationTableBody">
                 <!-- Les lignes de configuration seront insérées ici dynamiquement -->
             </tbody>
+            <tfoot>
+                <tr>
+                    <td></td>
+                    <td><input type="text" class="form form-control" id="equipementName" placeholder="Nom de l'équipement"></td>
+                    <td><input type="text" class="form form-control" id="equipementIP" placeholder="IP de l'équipement"></td>
+                    <td></td>
+                    <td></td>
+                    <td><a onclick="addEquipement()" class="btn btn-success"><i class="fas fa-plus"></i></a></td>
+                </tr>
         </table>
     </main>
 
@@ -55,7 +86,7 @@
 
     <!-- Bootstrap Bundle JS (Popper inclus) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+    <script src="toaster.js"></script>
     <script>
         async function getHosts() { 
             url = 'http://127.0.0.1:8000/hosts';
@@ -68,6 +99,7 @@
                 return await response.json();
             } catch (error) {
                 console.error("Impossible de récupérer les hôtes:", error);
+                showToast("Erreur", "Impossible de récupérer les hôtes.");
                 return [];
             }
         }
@@ -82,28 +114,74 @@
                 return await response.json();
             } catch (error) {
                 console.error(`Impossible de récupérer les indicateurs pour l'hôte ${hostId}:`, error);
+                showToast("Erreur", `Impossible de récupérer les indicateurs pour l'hôte ${hostId}.`);
                 return [];
             }
         }
 
-        (async () => {
-            const hosts = await getHosts();
+        async function loadConfiguration() {
+            hosts = await getHosts();
+            tableBody = document.getElementById('configurationTableBody');
+            tableBody.innerHTML = '';
 
-            for (const host of hosts) {
-                const indicators = await getIndicators(host.id);
-                const tableBody = document.getElementById('configurationTableBody');
-                const row = document.createElement('tr');
+            for (host of hosts) {
+                indicators = await getIndicators(host.id);
+                row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${host.id}</td>
                     <td>${host.name}</td>
                     <td>${host.ip}</td>
                     <td>${(host.username && host.password && host.ssh_port) ? 'Oui' : 'Non'}</td>
                     <td>${indicators.length}</td>
-                    <td><a href="configuration_edithost.html?id=${host.id}" class="btn btn-sm btn-primary">Éditer</a></td>
+                    <td>
+                        <a href="configuration_edithost.html?id=${host.id}" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></a>
+                        <button onclick="deleteEquipement(${host.id})" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                    </td>
                 `;
                 tableBody.appendChild(row);
             }
-        })();
+        }
+        loadConfiguration();
+
+        async function addEquipement() {
+            name = document.getElementById('equipementName').value;
+            ip = document.getElementById('equipementIP').value;
+            payload = {name: name, ip: ip};
+
+            try {
+                response = await fetch('http://127.0.0.1:8000/host', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP! Statut: ${response.status}`);
+                }
+
+                showToast("Succès", "Équipement ajouté avec succès.");
+                loadConfiguration();
+            } catch (error) {
+                console.error("Erreur lors de l'ajout de l'équipement:", error);
+                showToast("Erreur", "Erreur lors de l'ajout de l'équipement.");
+            }
+        }
+
+        async function deleteEquipement(hostId) {
+            try {
+                response = await fetch(`http://127.0.0.1:8000/host/${hostId}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP! Statut: ${response.status}`);
+                }
+                showToast("Succès", "Équipement supprimé avec succès.");
+                loadConfiguration();
+            } catch (error) {
+                console.error("Erreur lors de la suppression de l'équipement:", error);
+                showToast("Erreur", "Erreur lors de la suppression de l'équipement.");
+            }
+        }
     </script>
 </body>
 </html>
