@@ -7,8 +7,29 @@
     <meta name="description" content="Base HTML avec Bootstrap 5.3" />
     <!-- Bootstrap 5.3 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1055;
+        }
+    </style>
 </head>
 <body>
+    <!-- Toast Container -->
+    <div class="toast-container">
+        <div id="notificationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <div class="rounded me-2" style="width: 20px; height: 20px;" id="toastIcon"></div>
+                <strong class="me-auto" id="toastTitle"><!-- Titre ici --></strong>
+                <small id="toastTime"><!-- Le moment ici --></small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Fermer"></button>
+            </div>
+            <div class="toast-body" id="toastMessage"> <!-- Le Message sera ICI --> </div>
+        </div>
+    </div>
+
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
@@ -30,8 +51,33 @@
     <main class="container my-5">
         <h1 class="mb-4">Bienvenue sur le Dashboard</h1>
         <div class="accordion" id="accordionMainDashboard">
+            <div class="d-flex justify-content-center my-5">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
         </div>
     </main>
+
+
+
+    <!-- Modal Graphique -->
+    <div class="modal fade" id="modalGraphique" tabindex="-1" aria-labelledby="modalGraphiqueLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="modalGraphiqueLabel">Graphique</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalGraphBody"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 
     <!-- Footer -->
     <footer class="bg-dark text-light py-4">
@@ -42,7 +88,10 @@
 
     <!-- Bootstrap Bundle JS (Popper inclus) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+    <script src="toaster.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="graph.js"></script>
     <script>
         async function getHosts() { 
             url = 'http://127.0.0.1:8000/hosts';
@@ -55,6 +104,7 @@
                 return await response.json();
             } catch (error) {
                 console.error("Impossible de récupérer les hôtes:", error);
+                showToast("Erreur", "Impossible de récupérer les hôtes.");
                 return [];
             }
         }
@@ -69,6 +119,22 @@
                 return await response.json();
             } catch (error) {
                 console.error(`Impossible de récupérer les indicateurs pour l'hôte ${hostId}:`, error);
+                showToast("Erreur", `Impossible de récupérer les indicateurs pour l'hôte ${hostId}.`);
+                return [];
+            }
+        }
+
+        async function getIndicatorValues(indicatorId) {
+            url = `http://127.0.0.1:8000/indicator/${indicatorId}/values`;
+            try {
+                response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP! Statut: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error(`Impossible de récupérer les valeurs pour l'indicateur ${indicatorId}:`, error);
+                showToast("Erreur", `Impossible de récupérer les valeurs pour l'indicateur ${indicatorId}.`);
                 return [];
             }
         }
@@ -80,12 +146,12 @@
                 if (!response.ok) {
                     throw new Error(`Erreur HTTP! Statut: ${response.status}`);
                 }
-                alert(`Indicateur ${indicatorId} vérifié avec succès.`);
+                showToast("Succès", `Indicateur ${indicatorId} vérifié avec succès.`);
                 tbody = document.getElementById(`host-${hostId}-indicators`);
                 tbody.innerHTML = await loadIndicatorsView(hostId);
             } catch (error) {
                 console.error(`Impossible de vérifier l'indicateur ${indicatorId}:`, error);
-                alert(`Erreur lors de la vérification de l'indicateur ${indicatorId}.`);
+                showToast("Erreur", `Erreur lors de la vérification de l'indicateur ${indicatorId}.`);
             }
         }
 
@@ -103,7 +169,7 @@
                         <td>${indicator.last_value.value}</td>
                         <td>
                             <button class="btn btn-sm btn-primary" onclick="checkIndicator(${indicator.id},${host_Id})">Check</button>
-                            <a class="btn btn-sm btn-outline-dark" data-bs-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">⬍</a>
+                            <a class="btn btn-sm btn-outline-dark" data-bs-toggle="collapse" onClick="openGraphModal(${indicator.id})" role="button" aria-expanded="false" aria-controls="collapseExample">⬍</a>
                         </td>
                     </tr>
                 `;
@@ -113,6 +179,7 @@
 
         async function loadHostsView(host_Id) {
             hosts = await getHosts();
+            document.getElementById('accordionMainDashboard').innerHTML = '';
             for (host of hosts) {
                 accordionItem = document.createElement('div');
                 accordionItem.className = 'accordion-item';
