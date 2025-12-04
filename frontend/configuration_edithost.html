@@ -75,7 +75,7 @@
                         </div>
                         <div class="mb-3">  
                             <label for="sshPassword" class="form-label">Mot de passe SSH</label>
-                            <input type="password" class="form-control">
+                            <input type="password" class="form-control" placeholder="⋅⋅⋅⋅⋅⋅⋅⋅">
                         </div>
                         <div class="mb-3">
                             <label for="sshPort" class="form-label">Port SSH</label>
@@ -93,6 +93,7 @@
                             <th>Intitulé</th>
                             <th>Action</th>
                             <th>Intervalle</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody id="tableIndicatorsBody">
@@ -101,7 +102,7 @@
                     <tfoot>
                         <tr>
                             <td><button class="btn btn-outline-primary" onclick="addIndicator()">+</button></td>
-                            <td><input type="text" class="form-control" placeholder="Intitulé"></td>
+                            <td><input type="text" class="form-control" id="IndicatorTitle" placeholder="Intitulé"></td>
                             <td>
                                 <select class="form-select" id="ActionSelector">
                                     <option value="">Sélectionner une action</option>
@@ -182,7 +183,7 @@
             }
         }
 
-        (async () => {
+        async function fillIndicators() {
             host = await getHost();
             if (!host) return;
             document.getElementById('hostName').value = host.name;
@@ -192,6 +193,7 @@
 
             indicators = await getIndicators(host.id);
             tableBody = document.getElementById('tableIndicatorsBody');
+            tableBody.innerHTML = '';
             for (indicator of indicators) {
                 row = document.createElement('tr');
                 row.innerHTML = `
@@ -199,10 +201,24 @@
                     <td>${indicator.name}</td>
                     <td>${indicator.action_id || 'N/A'}</td>
                     <td>${indicator.interval}</td>
+                    <td><button class="btn btn-sm btn-outline-danger" onclick="deleteIndicator(${indicator.id})">X</button></td>
                 `;
                 tableBody.appendChild(row);
             }
-        })();
+        }
+        fillIndicators();
+
+        async function fillActions() {
+            const actions = await getActions();
+            const actionSelector = document.getElementById('ActionSelector');
+            actions.forEach(action => {
+                const option = document.createElement('option');
+                option.value = action.id;
+                option.textContent = action.name;
+                actionSelector.appendChild(option);
+            });
+        }
+        fillActions();
 
         async function updateHost() {
             params = new URLSearchParams(window.location.search);
@@ -235,23 +251,68 @@
             }
         }
 
-        async function populateActions() {
-            const actions = await getActions();
-            const actionSelector = document.getElementById('ActionSelector');
-            actions.forEach(action => {
-                const option = document.createElement('option');
-                option.value = action.id;
-                option.textContent = action.name;
-                actionSelector.appendChild(option);
-            });
-        }
-        populateActions();
-
         async function updateSSHHost() {
-            showToast('Information', 'Fonction SSH en cours de développement', 'warning');
+            params = new URLSearchParams(window.location.search);
+            id = params.get('id');
+            if (id) { url = `http://127.0.0.1:8000/host/${encodeURIComponent(id)}`;
+            } else { 
+                showToast('Erreur', 'ID de l\'hôte manquant dans l\'URL', 'error');
+                return; 
+            }
+            data = {
+                username: document.getElementById('sshUsername').value,
+                password: document.getElementById('sshPassword').value,
+                ssh_port: parseInt(document.getElementById('sshPort').value),
+            };
+            try {
+                response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json',},
+                    body: JSON.stringify(data),
+                });
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP! Statut: ${response.status}`);
+                }
+            } catch (error) {
+                console.error(`Impossible de mettre à jour l'hôte ${id}:`, error);
+                showToast('Erreur', 'Impossible de mettre à jour l\'hôte', 'error');
+                return null;
+            }
         }
         async function addIndicator() {
-            showToast('Information', 'Fonction d\'ajout d\'indicateur en cours de développement', 'warning');
+            params = new URLSearchParams(window.location.search);
+            id = params.get('id');
+            if (id) { url = `http://127.0.0.1:8000/host/${encodeURIComponent(id)}/indicator`;
+            } else { 
+                showToast('Erreur', 'ID de l\'hôte manquant dans l\'URL', 'error');
+                return; 
+            }
+            data = {
+                name: document.getElementById('IndicatorTitle').value,
+                action_id: document.getElementById('ActionSelector').value,
+                interval: parseInt(document.querySelector('tfoot input[type="number"]').value),
+            };
+            try {
+                response = await fetch(url, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json',},
+                    body: JSON.stringify(data),
+                });
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP! Statut: ${response.status}`);
+                }
+                const result = await response.json();
+                showToast('Succès', 'Indicateur ajouté avec succès', 'success');
+                fillIndicators();
+                return result;
+            } catch (error) {
+                console.error(`Impossible d'ajouter l'indicateur à l'hôte ${id}:`, error);
+                showToast('Erreur', 'Impossible d\'ajouter l\'indicateur', 'error');
+                return null;
+            }
+        }
+        async function deleteIndicator(indicatorId) {
+            showToast('Information', 'Fonction de suppression d\'indicateur en cours de développement', 'warning');
         }
 
     </script>
