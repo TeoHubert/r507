@@ -1,13 +1,18 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-import json
+
+# Mes propres modèles customs
 from models.host import *
 from models.action import *
 from models.indicator import *
 from models.indicator_values import *
+
+# Gestion de la base de données
 from database import configure_db, engine
-from sqlmodel import Session, select
+from sqlmodel import SQLModel, Session, select
+
+# Autres import utils
 import asyncio
 import datetime
 from tools.password_security import chiffrer_mot_de_passe
@@ -44,6 +49,7 @@ async def start_scheduler():
 
 ## Gestion de la partie base de données au démarrage de l'application ##
 async def on_start_up():
+    pass
     configure_db()
 
 app = FastAPI(on_startup=[on_start_up, start_scheduler]) ## Initialisation de l'application FastAPI ##
