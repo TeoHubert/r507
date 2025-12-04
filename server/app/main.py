@@ -74,7 +74,7 @@ def read_host(host_id: int) -> Host:
 @app.post("/host")
 def create_host(host: Host) -> Host:
     with Session(engine) as session:
-        host.password = chiffrer_mot_de_passe(host.password)
+        host.password = chiffrer_mot_de_passe(host.password) if host.password else None
         session.add(host)
         session.commit()
         session.refresh(host)
@@ -96,6 +96,10 @@ def update_host(host_id: int, updated_host: Host) -> Host:
         if not host: raise HTTPException(status_code=404, detail="Host not found")
         host.name = updated_host.name if updated_host.name else host.name
         host.ip = updated_host.ip if updated_host.ip else host.ip
+        host.username = updated_host.username if updated_host.username else host.username
+        if updated_host.password:
+            host.password = chiffrer_mot_de_passe(updated_host.password)
+        host.ssh_port = updated_host.ssh_port if updated_host.ssh_port else host.ssh_port
         session.add(host)
         session.commit()
         session.refresh(host)
