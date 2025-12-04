@@ -22,11 +22,11 @@ Exemple sous linux :
 source venv/bin/activate
 ```
 
-3. Installer les dépendances nécéssaires
+3. Installer la dépendance nécéssaire "Poetry"
 
 Exemple général sous linux :
 ```bash
-pip install -r {source_du_projet}/server/requirements.txt
+pip install poetry
 ```
 
 4. Lancer l'application
@@ -34,7 +34,19 @@ pip install -r {source_du_projet}/server/requirements.txt
 Exemple général sous linux :
 ```bash
 cd {source_du_projet}/server/app
-python -m uvicon main:app --reload
+poetry run uvicorn main:app --reload
+```
+
+### Gestion des versions de la BDD
+
+Générer une nouvelle version de la base de donnée (côté DEV)
+```bash
+poetry run alembic revision --autogenerate -m ""
+```
+
+Réaliser la mise à jour de la base (côté client)
+```bash
+poetry run alembic upgrade head
 ```
 
 
