@@ -103,8 +103,9 @@
                             <td><button class="btn btn-outline-primary" onclick="addIndicator()">+</button></td>
                             <td><input type="text" class="form-control" placeholder="Intitulé"></td>
                             <td>
-                                <select class="form-select">
+                                <select class="form-select" id="ActionSelector">
                                     <option value="">Sélectionner une action</option>
+                                    <!-- Les options des actions seront insérées ici dynamiquement -->
                                 </select>
                             </td>
                             <td>
@@ -167,6 +168,20 @@
             }
         }
 
+        async function getActions() {
+            url = `http://127.0.0.1:8000/actions`;
+            try {
+                response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP! Statut: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error("Impossible de récupérer les actions:", error);
+                return [];
+            }
+        }
+
         (async () => {
             host = await getHost();
             if (!host) return;
@@ -219,6 +234,18 @@
                 return null;
             }
         }
+
+        async function populateActions() {
+            const actions = await getActions();
+            const actionSelector = document.getElementById('ActionSelector');
+            actions.forEach(action => {
+                const option = document.createElement('option');
+                option.value = action.id;
+                option.textContent = action.name;
+                actionSelector.appendChild(option);
+            });
+        }
+        populateActions();
 
         async function updateSSHHost() {
             showToast('Information', 'Fonction SSH en cours de développement', 'warning');
