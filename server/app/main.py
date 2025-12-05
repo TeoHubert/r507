@@ -24,7 +24,7 @@ async def execute_indicator(indicator: Indicator) -> None:
         if not action: return "Action de l'indicateur not found"
         try:
             indicator_host = session.get(Host, indicator.host_id)
-            value, unite, error_message = action.exec_script(host=indicator_host)
+            value, unite, error_message = action.exec_script(host=indicator_host, parametre=indicator.parametre)
             indicator_value = IndicatorValue(indicator_id=indicator.id, value=value, unite=unite, error_message=error_message)
             session.add(indicator_value)
             session.commit()
@@ -197,7 +197,7 @@ def execute_indicator_action(indicator_id: int, host_id: int = None) -> bool:
         action = session.get(Action, indicator.action_id)
         if not action: raise HTTPException(status_code=404, detail="Action not found for this indicator")
         try:
-            value, unite, error_message = action.exec_script(host=host)
+            value, unite, error_message = action.exec_script(host=host, parametre=indicator.parametre)
             indicator_value = IndicatorValue(indicator_id=indicator.id, value=value, unite=unite, error_message=error_message)
             session.add(indicator_value)
             session.commit()

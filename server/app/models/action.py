@@ -12,13 +12,13 @@ class Action(SQLModel, table=True):
     rounding: Optional[int] = Field(default=2)
 
     # Retourne un tuple (value, unite, error_message)
-    def exec_script(self, host) -> Tuple[Optional[float], Optional[str], Optional[str]]:
+    def exec_script(self, host, parametre: Optional[str] = None) -> Tuple[Optional[float], Optional[str], Optional[str]]:
         if not self.script_path:
             return (None, None, "Aucun script_path défini pour cette action.")
         try:
             module = __import__(self.script_path, fromlist=[''])
             if hasattr(module, 'run'):
-                value = module.run(host)
+                value = module.run(host, parametre)
                 if isinstance(value, (int, float)):
                     rounding = self.rounding or 0
                     return (round(value, rounding), self.unite, None)

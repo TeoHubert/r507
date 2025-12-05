@@ -1,6 +1,6 @@
 from models.host import Host
 
-def run(host: Host) -> str:
+def run(host: Host, parametre: str = None) -> str:
     try:
         value = (int(host.execute_ssh_command("free -m | grep Mem | awk '{print $3}'"))/int(host.execute_ssh_command("free -m | grep Mem | awk '{print $2}'"))*100)
         return value
