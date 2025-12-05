@@ -213,10 +213,10 @@
         fillIndicators();
 
         async function fillActions() {
-            const actions = await getActions();
-            const actionSelector = document.getElementById('ActionSelector');
+            actions = await getActions();
+            actionSelector = document.getElementById('ActionSelector');
             actions.forEach(action => {
-                const option = document.createElement('option');
+                option = document.createElement('option');
                 option.value = action.id;
                 option.textContent = action.name;
                 actionSelector.appendChild(option);
@@ -245,7 +245,7 @@
                 if (!response.ok) {
                     throw new Error(`Erreur HTTP! Statut: ${response.status}`);
                 }
-                const result = await response.json();
+                result = await response.json();
                 showToast('Succès', 'Hôte mis à jour avec succès', 'success');
                 return result;
             } catch (error) {
@@ -307,7 +307,7 @@
                 if (!response.ok) {
                     throw new Error(`Erreur HTTP! Statut: ${response.status}`);
                 }
-                const result = await response.json();
+                result = await response.json();
                 showToast('Succès', 'Indicateur ajouté avec succès', 'success');
                 fillIndicators();
                 return result;
