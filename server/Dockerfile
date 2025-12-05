@@ -12,5 +12,7 @@ RUN poetry install --no-root --no-interaction --no-ansi
 
 EXPOSE 8000
 
+ENV EXECUTION_EN_DOCKER true
+
 CMD ["alembic", "upgrade", "head"]
 CMD ["poetry", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

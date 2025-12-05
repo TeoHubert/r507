@@ -7,12 +7,16 @@ from cryptography.fernet import Fernet
 from pathlib import Path
 
 # Génération d'un secret key si elle n'existe pas
-if not Path("/app/data/secret.key").exists():
-    with open("/app/data/secret.key", "w") as key_file:
+abs_path = os.path.dirname(os.path.abspath(__file__))
+secret_key_path = f"{abs_path}/../../data/secret.key"
+if os.getenv("EXECUTION_EN_DOCKER") == "true":
+    secret_key_path = "/app/data/secret.key"
+if not Path(secret_key_path).exists():
+    with open(secret_key_path, "w") as key_file:
         key_file.write(base64.urlsafe_b64encode(os.urandom(32)).decode())
 
 # Lecture de la clé secrète
-with open("/app/data/secret.key", "r") as key_file:
+with open(secret_key_path, "r") as key_file:
     secret = key_file.read()
 
 def chiffrer_mot_de_passe(mot_de_passe: str) -> str:
