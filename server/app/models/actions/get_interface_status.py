@@ -4,7 +4,6 @@ import json
 def run(host: Host, parametre: str = None) -> str:
     try:
         result = host.execute_ssh_command("vtysh -c 'show interface brief json'")
-        print(result)
         result = result.replace("'", '"')
         data = json.loads(result)
         status = data[parametre['interface']]['status']
