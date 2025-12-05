@@ -59,6 +59,23 @@ origins = ["*"]
 
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
+### Ajouter en base les actions si elles nexistent pas ###
+def initialize_actions():
+    with Session(engine) as session:
+        existing_actions = session.exec(select(Action)).all()
+        if not existing_actions:
+            default_actions = [
+                Action(name="Get Linux CPU", script_path="models.actions.cpu_linux", min_value=0, max_value=100, ssh_error_default_value=100, unite="%", rounding=2, labels={}),
+                Action(name="Get Interface Status", script_path="models.actions.get_interface_status", min_value=0, max_value=2, ssh_error_default_value=0, unite="", rounding=0, labels={"0":"En Erreur","1":"Down","2":"UP"}),
+                Action(name="Get Linux Memory", script_path="models.actions.memory_linux", min_value=0, max_value=100, ssh_error_default_value=100, unite="%", rounding=2, labels={}),
+                Action(name="Time Ping", script_path="models.actions.ping_time_linux", min_value=0, max_value=1000, ssh_error_default_value=1000, unite="ms", rounding=2, labels={}),
+            ]
+            for action in default_actions:
+                session.add(action)
+            session.commit()
+
+initialize_actions()
+
 @app.get("/hosts")
 def read_hosts() -> list[Host]:
     with Session(engine) as session:
