@@ -53,10 +53,10 @@
         <h1 class="mb-4">Configurations</h1>
         <ul class="nav nav-pills nav-fill">
             <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="configuration.html">Hôtes</a>
+                <a class="nav-link" aria-current="page" href="configuration.html">Hôtes</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="configuration_actions.html">Actions</a>
+                <a class="nav-link active" href="configuration_actions.html">Actions</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="configuration_users.html">Utilisateurs</a>
@@ -67,10 +67,13 @@
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Equipement</th>
-                    <th>IP</th>
-                    <th>SSH</th>
-                    <th>Indicateurs</th>
+                    <th>Nom</th>
+                    <th>Script</th>
+                    <th>Valeur min</th>
+                    <th>Valeur max</th>
+                    <th>Unité</th>
+                    <th>Valeur d'erreur SSH</th>
+                    <th>Arrondi</th>
                     <th></th>
                 </tr>
             </thead>
@@ -80,11 +83,14 @@
             <tfoot>
                 <tr>
                     <td></td>
-                    <td><input type="text" class="form form-control" id="equipementName" placeholder="Nom de l'équipement"></td>
-                    <td><input type="text" class="form form-control" id="equipementIP" placeholder="IP de l'équipement"></td>
-                    <td></td>
-                    <td></td>
-                    <td><a onclick="addEquipement()" class="btn btn-success"><i class="fas fa-plus"></i></a></td>
+                    <td><input type="text" class="form form-control" id="actionName" placeholder="Nom de l'action"></td>
+                    <td><input type="text" class="form form-control" id="actionScript" placeholder="Script de l'action"></td>
+                    <td><input type="number" class="form form-control" id="actionMinValue" placeholder="Valeur min"></td>
+                    <td><input type="number" class="form form-control" id="actionMaxValue" placeholder="Valeur max"></td>
+                    <td><input type="text" class="form form-control" id="actionUnite" placeholder="Unité"></td>
+                    <td><input type="text" class="form form-control" id="actionErrorValue" placeholder="Valeur d'erreur SSH"></td>
+                    <td><input type="number" class="form form-control" id="actionRounding" placeholder="Arrondi"></td>
+                    <td><a onclick="addAction()" class="btn btn-success"><i class="fas fa-plus"></i></a></td>
                 </tr>
         </table>
     </main>
@@ -100,8 +106,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="toaster.js"></script>
     <script>
-        async function getHosts() { 
-            url = 'http://127.0.0.1:8000/hosts';
+        async function getActions() { 
+            url = 'http://127.0.0.1:8000/actions';
             
             try {
                 response = await fetch(url);
@@ -110,44 +116,31 @@
                 }
                 return await response.json();
             } catch (error) {
-                console.error("Impossible de récupérer les hôtes:", error);
-                showToast("Erreur", "Impossible de récupérer les hôtes.");
-                return [];
-            }
-        }
-
-        async function getIndicators(hostId) {
-            url = `http://127.0.0.1:8000/host/${hostId}/indicators`;
-            try {
-                response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`Erreur HTTP! Statut: ${response.status}`);
-                }
-                return await response.json();
-            } catch (error) {
-                console.error(`Impossible de récupérer les indicateurs pour l'hôte ${hostId}:`, error);
-                showToast("Erreur", `Impossible de récupérer les indicateurs pour l'hôte ${hostId}.`);
+                console.error("Impossible de récupérer les actions:", error);
+                showToast("Erreur", "Impossible de récupérer les actions.");
                 return [];
             }
         }
 
         async function loadConfiguration() {
-            hosts = await getHosts();
+            actions = await getActions();
             tableBody = document.getElementById('configurationTableBody');
             tableBody.innerHTML = '';
 
-            for (host of hosts) {
-                indicators = await getIndicators(host.id);
+            for (action of actions) {
                 row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${host.id}</td>
-                    <td>${host.name}</td>
-                    <td>${host.ip}</td>
-                    <td>${(host.username && host.password && host.ssh_port) ? 'Oui' : 'Non'}</td>
-                    <td>${indicators.length}</td>
+                    <td>${action.id}</td>
+                    <td>${action.name}</td>
+                    <td>${action.script_path}</td>
+                    <td>${action.min_value}</td>
+                    <td>${action.max_value}</td>
+                    <td>${action.unite}</td>
+                    <td>${action.ssh_error_default_value}</td>
+                    <td>${action.rounding}</td>
                     <td>
-                        <a href="configuration_edithost.html?id=${host.id}" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></a>
-                        <button onclick="deleteEquipement(${host.id})" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                        <a href="configuration_editaction.html?id=${action.id}" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></a>
+                        <button onclick="deleteAction(${action.id})" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
                     </td>
                 `;
                 tableBody.appendChild(row);
@@ -155,13 +148,26 @@
         }
         loadConfiguration();
 
-        async function addEquipement() {
-            name = document.getElementById('equipementName').value;
-            ip = document.getElementById('equipementIP').value;
-            payload = {name: name, ip: ip};
+        async function addAction() {
+            name = document.getElementById('actionName').value;
+            script_path = document.getElementById('actionScript').value;
+            minValue = document.getElementById('actionMinValue').value;
+            maxValue = document.getElementById('actionMaxValue').value;
+            unite = document.getElementById('actionUnite').value;
+            errorValue = document.getElementById('actionErrorValue').value;
+            rounding = document.getElementById('actionRounding').value;
+            payload = {
+                name: name,
+                script_path: script_path,
+                min_value: minValue,
+                max_value: maxValue,
+                unite: unite,
+                ssh_error_default_value: errorValue,
+                rounding: rounding
+            };
 
             try {
-                response = await fetch('http://127.0.0.1:8000/host', {
+                response = await fetch('http://127.0.0.1:8000/action', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(payload)
@@ -174,14 +180,14 @@
                 showToast("Succès", "Équipement ajouté avec succès.");
                 loadConfiguration();
             } catch (error) {
-                console.error("Erreur lors de l'ajout de l'équipement:", error);
-                showToast("Erreur", "Erreur lors de l'ajout de l'équipement.");
+                console.error("Erreur lors de l'ajout de l'action:", error);
+                showToast("Erreur", "Erreur lors de l'ajout de l'action.");
             }
         }
 
-        async function deleteEquipement(hostId) {
+        async function deleteAction(actionId) {
             try {
-                response = await fetch(`http://127.0.0.1:8000/host/${hostId}`, {
+                response = await fetch(`http://127.0.0.1:8000/action/${actionId}`, {
                     method: 'DELETE'
                 });
                 if (!response.ok) {
@@ -190,8 +196,8 @@
                 showToast("Succès", "Équipement supprimé avec succès.");
                 loadConfiguration();
             } catch (error) {
-                console.error("Erreur lors de la suppression de l'équipement:", error);
-                showToast("Erreur", "Erreur lors de la suppression de l'équipement.");
+                console.error("Erreur lors de la suppression de l'action:", error);
+                showToast("Erreur", "Erreur lors de la suppression de l'action.");
             }
         }
     </script>

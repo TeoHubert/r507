@@ -161,6 +161,7 @@
             indicators = await getIndicators(host_Id);
             indicatorsHtml = '';
             for (indicator of indicators) {
+                console.log(indicator);
                 dateISO = indicator.last_value.date;
                 dateObj = new Date(dateISO);
                 dateFrancaise = dateObj.toLocaleDateString('fr-FR') + ' ' + dateObj.toLocaleTimeString('fr-FR', {hour12: false});
