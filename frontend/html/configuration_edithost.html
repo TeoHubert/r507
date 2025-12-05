@@ -116,7 +116,7 @@
                                     <span class="input-group-text">s</span>
                                 </div>
                             </td>
-                            <td><input type="text" class="form-control" placeholder="Paramètre" id="IndicatorParameter"></td>
+                            <td><input type="text" class="form-control" placeholder="Paramètre" id="IndicatorParameter" value="{}"></td>
                             <td><button class="btn btn-outline-primary" onclick="addIndicator()">+</button></td>
                         </tr>
                     </tfoot>
@@ -204,7 +204,7 @@
                     <td>${indicator.name}</td>
                     <td>${indicator.action_id || 'N/A'}</td>
                     <td>${indicator.interval}</td>
-                    <td>${indicator.parametre || 'N/A'}</td>
+                    <td>${JSON.stringify(indicator.parametre) || 'N/A'}</td>
                     <td><button class="btn btn-sm btn-outline-danger" onclick="deleteIndicator(${indicator.id})">X</button></td>
                 `;
                 tableBody.appendChild(row);
@@ -292,12 +292,22 @@
                 showToast('Erreur', 'ID de l\'hôte manquant dans l\'URL', 'error');
                 return; 
             }
+            try {
+                parametre = JSON.parse(document.getElementById('IndicatorParameter').value);
+            } catch (e) {
+                showToast('Erreur', 'Le paramètre doit être un JSON valide', 'error');
+                return;
+            }
             data = {
                 name: document.getElementById('IndicatorTitle').value,
                 action_id: document.getElementById('ActionSelector').value,
                 interval: parseInt(document.getElementById('IndicatorInterval').value),
-                parametre: document.getElementById('IndicatorParameter').value,
+                parametre: parametre
             };
+            if (data.action_id === "" || isNaN(data.interval) || data.name.trim() === "") {
+                showToast('Erreur', 'Veuillez remplir tous les champs obligatoires', 'error');
+                return;
+            }
             try {
                 response = await fetch(url, {
                     method: 'POST',
@@ -318,7 +328,24 @@
             }
         }
         async function deleteIndicator(indicatorId) {
-            showToast('Information', 'Fonction de suppression d\'indicateur en cours de développement', 'warning');
+            params = new URLSearchParams(window.location.search);
+            hostId = params.get('id');
+            if (hostId) { url = `http://127.0.0.1:8000/host/${encodeURIComponent(hostId)}/indicator/${encodeURIComponent(indicatorId)}`;
+            } else { 
+                showToast('Erreur', 'ID de l\'hôte manquant dans l\'URL', 'error');
+                return; 
+            }
+            try {
+                response = await fetch(url, { method: 'DELETE' });
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP! Statut: ${response.status}`);
+                }
+                showToast('Succès', 'Indicateur supprimé avec succès', 'success');
+                fillIndicators();
+            } catch (error) {
+                console.error(`Impossible de supprimer l'indicateur ${indicatorId} de l'hôte ${hostId}:`, error);
+                showToast('Erreur', 'Impossible de supprimer l\'indicateur', 'error');
+            }
         }
 
     </script>

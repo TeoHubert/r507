@@ -163,6 +163,7 @@ def get_host_indicators(host_id: int) -> list[IndicatorWithLastValue]:
         indicators = session.exec(select(Indicator).where(Indicator.host_id == host_id)).all()
         result_liste = []
         for indicator in indicators:
+            print(indicator.parametre)
             last_value = session.exec(select(IndicatorValue).where(IndicatorValue.indicator_id == indicator.id).order_by(IndicatorValue.date.desc()).limit(1)).first()
             result_liste.append(IndicatorWithLastValue(**indicator.model_dump(), last_value=last_value))
         return result_liste

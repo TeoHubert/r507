@@ -9,6 +9,7 @@ class IndicatorBase(SQLModel):
     name: str
     action_id: Optional[int] = Field(default=None, foreign_key="action.id")
     interval: int = Field(default=60)
+    parametre: Optional[dict] = Field(default=None, sa_column=Column(JSON, nullable=True))
 
 #Modèle utilisé pour la table "indicator" dans la base de données
 class Indicator(IndicatorBase, table=True):
