@@ -24,7 +24,8 @@ async def execute_indicator(indicator: Indicator) -> None:
         if not action: return "Action de l'indicateur not found"
         try:
             indicator_host = session.get(Host, indicator.host_id)
-            indicator_value = IndicatorValue(indicator_id=indicator.id, value=action.exec_script(host=indicator_host))
+            value, unite, error_message = action.exec_script(host=indicator_host)
+            indicator_value = IndicatorValue(indicator_id=indicator.id, value=value, unite=unite, error_message=error_message)
             session.add(indicator_value)
             session.commit()
             session.refresh(indicator_value)
@@ -196,8 +197,8 @@ def execute_indicator_action(indicator_id: int, host_id: int = None) -> bool:
         action = session.get(Action, indicator.action_id)
         if not action: raise HTTPException(status_code=404, detail="Action not found for this indicator")
         try:
-            result = action.exec_script(host=host)
-            indicator_value = IndicatorValue(indicator_id=indicator.id, value=result)
+            value, unite, error_message = action.exec_script(host=host)
+            indicator_value = IndicatorValue(indicator_id=indicator.id, value=value, unite=unite, error_message=error_message)
             session.add(indicator_value)
             session.commit()
             session.refresh(indicator_value)
@@ -208,13 +209,14 @@ def execute_indicator_action(indicator_id: int, host_id: int = None) -> bool:
         
 @app.get("/host/{host_id}/indicator/{indicator_id}/values")
 @app.get("/indicator/{indicator_id}/values")
-def get_indicator_values(indicator_id: int, host_id: int = None) -> list[IndicatorValue]:
+def get_indicator_values(indicator_id: int, host_id: int = None) -> ListeIndicatorValue:
     with Session(engine) as session:
         indicator = session.get(Indicator, indicator_id)
+        action = session.get(Action, indicator.action_id)
         if not indicator or (host_id and indicator.host_id != host_id):
             raise HTTPException(status_code=404, detail="Indicator not found for this host")
         values = session.exec(select(IndicatorValue).where(IndicatorValue.indicator_id == indicator_id).order_by(IndicatorValue.date)).all()
-        return values
+        return ListeIndicatorValue(values=values, action_min_value=action.min_value, action_max_value=action.max_value, action_unite=action.unite)
     
 @app.delete("/host/{host_id}/indicator/{indicator_id}/values")
 @app.delete("/indicator/{indicator_id}/values")
