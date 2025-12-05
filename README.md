@@ -100,6 +100,8 @@ r507/
 
 ### 🐳 Déploiement avec Docker (Recommandé)
 
+> Dans cette configuration, vous avez des actions par défaut mais aucun host ni indicateur associé
+
 1. **Cloner le repository :**
 ```bash
 git clone https://github.com/TeoHubert/r507.git
@@ -117,6 +119,14 @@ docker compose up --build
 - **Documentation API :** http://localhost:8000/docs
 
 ### 🛠️ Déploiement en environnement local (Non recommandé sauf pour DEV)
+
+> Dans cette configuration, vous avez les actions mais aussi un host (Routeur Local) défini avec des indicateurs.
+> Cet host "Routeur Local" est démarrable par le docker-compose dans `tests/clients`
+
+```bash
+cd tests/clients
+docker compose up -d
+```
 
 #### Prérequis
 - Python 3.9+
