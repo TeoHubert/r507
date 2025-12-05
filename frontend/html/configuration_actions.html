@@ -74,6 +74,7 @@
                     <th>Unité</th>
                     <th>Valeur d'erreur SSH</th>
                     <th>Arrondi</th>
+                    <th>Labels</th>
                     <th></th>
                 </tr>
             </thead>
@@ -90,6 +91,7 @@
                     <td><input type="text" class="form form-control" id="actionUnite" placeholder="Unité"></td>
                     <td><input type="text" class="form form-control" id="actionErrorValue" placeholder="Valeur d'erreur SSH"></td>
                     <td><input type="number" class="form form-control" id="actionRounding" placeholder="Arrondi"></td>
+                    <td><input type="text" class="form form-control" id="actionLabels" placeholder='Labels (ex: {"key":"value"})' value="{}"></td>
                     <td><a onclick="addAction()" class="btn btn-success"><i class="fas fa-plus"></i></a></td>
                 </tr>
         </table>
@@ -131,15 +133,16 @@
                 row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${action.id}</td>
-                    <td>${action.name}</td>
-                    <td>${action.script_path}</td>
-                    <td>${action.min_value}</td>
-                    <td>${action.max_value}</td>
-                    <td>${action.unite}</td>
-                    <td>${action.ssh_error_default_value}</td>
-                    <td>${action.rounding}</td>
+                    <td><input type="text" class="form-control form-control-sm" id="name_${action.id}" value="${action.name}"></td>
+                    <td><input type="text" class="form-control form-control-sm" id="script_${action.id}" value="${action.script_path}"></td>
+                    <td><input type="number" class="form-control form-control-sm" id="minvalue_${action.id}" value="${action.min_value}"></td>
+                    <td><input type="number" class="form-control form-control-sm" id="maxvalue_${action.id}" value="${action.max_value}"></td>
+                    <td><input type="text" class="form-control form-control-sm" id="unite_${action.id}" value="${action.unite}"></td>
+                    <td><input type="text" class="form-control form-control-sm" id="errorvalue_${action.id}" value="${action.ssh_error_default_value}"></td>
+                    <td><input type="number" class="form-control form-control-sm" id="rounding_${action.id}" value="${action.rounding}"></td>
+                    <td><input type="text" class="form-control form-control-sm" id="labels_${action.id}" value='${JSON.stringify(action.labels) || '{}'}'></td>
                     <td>
-                        <a href="configuration_editaction.html?id=${action.id}" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></a>
+                        <button onclick="updateAction(${action.id})" class="btn btn-sm btn-success me-1"><i class="fas fa-save"></i></button>
                         <button onclick="deleteAction(${action.id})" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
                     </td>
                 `;
@@ -147,6 +150,51 @@
             }
         }
         loadConfiguration();
+
+        async function updateAction(actionId) {
+            name = document.getElementById(`name_${actionId}`).value;
+            script_path = document.getElementById(`script_${actionId}`).value;
+            minValue = document.getElementById(`minvalue_${actionId}`).value;
+            maxValue = document.getElementById(`maxvalue_${actionId}`).value;
+            unite = document.getElementById(`unite_${actionId}`).value;
+            errorValue = document.getElementById(`errorvalue_${actionId}`).value;
+            rounding = document.getElementById(`rounding_${actionId}`).value;
+            
+            try {
+                labels = JSON.parse(document.getElementById(`labels_${actionId}`).value);
+            } catch (e) {
+                showToast("Erreur", "Format JSON invalide pour les labels.");
+                return;
+            }
+
+            payload = {
+                name: name,
+                script_path: script_path,
+                min_value: minValue,
+                max_value: maxValue,
+                unite: unite,
+                ssh_error_default_value: errorValue,
+                rounding: rounding,
+                labels: labels
+            };
+
+            try {
+                response = await fetch(`http://127.0.0.1:8000/action/${actionId}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP! Statut: ${response.status}`);
+                }
+
+                showToast("Succès", "Action mise à jour avec succès.");
+            } catch (error) {
+                console.error("Erreur lors de la mise à jour de l'action:", error);
+                showToast("Erreur", "Erreur lors de la mise à jour de l'action.");
+            }
+        }
 
         async function addAction() {
             name = document.getElementById('actionName').value;
@@ -156,6 +204,12 @@
             unite = document.getElementById('actionUnite').value;
             errorValue = document.getElementById('actionErrorValue').value;
             rounding = document.getElementById('actionRounding').value;
+            try {
+                labels = JSON.parse(document.getElementById('actionLabels').value);
+            } catch (e) {
+                showToast("Erreur", "Format JSON invalide pour les labels.");
+                return;
+            }
             payload = {
                 name: name,
                 script_path: script_path,
@@ -163,7 +217,8 @@
                 max_value: maxValue,
                 unite: unite,
                 ssh_error_default_value: errorValue,
-                rounding: rounding
+                rounding: rounding,
+                labels: labels
             };
 
             try {

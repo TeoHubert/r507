@@ -21,4 +21,5 @@ class ListeIndicatorValue(SQLModel):
     action_min_value: Optional[float] = None
     action_max_value: Optional[float] = None
     action_unite: Optional[str] = None
+    action_labels: Optional[dict] = None
     

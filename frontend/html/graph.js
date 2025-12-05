@@ -3,7 +3,8 @@ async function openGraphModal(indicatorId) {
     min_val = values.action_min_value;
     max_val = values.action_max_value;
     unite = values.action_unite;
-    console.log(values);
+    labels = values.action_labels;
+    console.log(labels);
     values = values.values;
     if (values.length === 0) {
         showToast("Erreur", "Aucune donnée disponible pour cet indicateur.");
@@ -75,9 +76,17 @@ async function openGraphModal(indicatorId) {
         y: item.value
     }));
 
+    // Fonction pour obtenir le label correspondant à une valeur
+    function getLabelForValue(value) {
+        if (labels && typeof labels === 'object') {
+            return labels[value] || value;
+        }
+        return value;
+    }
+
     // Créer le graphique avec Chart.js
     const modalBody = document.getElementById('modalGraphBody');
-    modalBody.innerHTML = '<canvas id="indicatorChart" style="width: 100%; height: 200px;"></canvas>';
+    modalBody.innerHTML = '<canvas id="indicatorChart" style="width: 100%; height: 400px;"></canvas>';
     const ctx = document.getElementById('indicatorChart').getContext('2d');
 
     new Chart(ctx, {
@@ -96,6 +105,15 @@ async function openGraphModal(indicatorId) {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    left: 10,
+                    right: 10,
+                    top: 10,
+                    bottom: 10
+                }
+            },
             scales: {
                 x: {
                     type: 'time',
@@ -122,7 +140,12 @@ async function openGraphModal(indicatorId) {
                         text: `Valeur (${unite})`
                     },
                     min: min_val,
-                    max: max_val
+                    max: max_val,
+                    ticks: {
+                        callback: function(value, index, values) {
+                            return getLabelForValue(value);
+                        }
+                    }
                 }
             },
             plugins: {
@@ -131,6 +154,11 @@ async function openGraphModal(indicatorId) {
                         title: function(context) {
                             return new Date(context[0].parsed.x).toLocaleDateString('fr-FR') + ' ' + 
                                     new Date(context[0].parsed.x).toLocaleTimeString('fr-FR', {hour12: false});
+                        },
+                        label: function(context) {
+                            const value = context.parsed.y;
+                            const label = getLabelForValue(value);
+                            return `Valeur: ${label} (${value})`;
                         }
                     }
                 }

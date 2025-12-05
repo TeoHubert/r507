@@ -148,6 +148,7 @@ def update_action(action_id: int, updated_action: Action) -> Action:
         action.ssh_error_default_value = updated_action.ssh_error_default_value if updated_action.ssh_error_default_value is not None else action.ssh_error_default_value
         action.unite = updated_action.unite if updated_action.unite else action.unite
         action.rounding = updated_action.rounding if updated_action.rounding is not None else action.rounding
+        action.labels = updated_action.labels if updated_action.labels is not None else action.labels
         session.add(action)
         session.commit()
         session.refresh(action)
@@ -163,7 +164,6 @@ def get_host_indicators(host_id: int) -> list[IndicatorWithLastValue]:
         indicators = session.exec(select(Indicator).where(Indicator.host_id == host_id)).all()
         result_liste = []
         for indicator in indicators:
-            print(indicator.parametre)
             last_value = session.exec(select(IndicatorValue).where(IndicatorValue.indicator_id == indicator.id).order_by(IndicatorValue.date.desc()).limit(1)).first()
             result_liste.append(IndicatorWithLastValue(**indicator.model_dump(), last_value=last_value))
         return result_liste
@@ -217,7 +217,7 @@ def get_indicator_values(indicator_id: int, host_id: int = None) -> ListeIndicat
         if not indicator or (host_id and indicator.host_id != host_id):
             raise HTTPException(status_code=404, detail="Indicator not found for this host")
         values = session.exec(select(IndicatorValue).where(IndicatorValue.indicator_id == indicator_id).order_by(IndicatorValue.date)).all()
-        return ListeIndicatorValue(values=values, action_min_value=action.min_value, action_max_value=action.max_value, action_unite=action.unite)
+        return ListeIndicatorValue(values=values, action_min_value=action.min_value, action_max_value=action.max_value, action_unite=action.unite, action_labels=action.labels)
     
 @app.delete("/host/{host_id}/indicator/{indicator_id}/values")
 @app.delete("/indicator/{indicator_id}/values")
