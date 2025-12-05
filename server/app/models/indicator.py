@@ -1,6 +1,7 @@
 from typing import Optional
 from models.indicator_values import IndicatorValue
 from sqlmodel import Field, SQLModel
+from sqlalchemy import Column, JSON
 
 ## Mon modèle initial
 class IndicatorBase(SQLModel):
@@ -16,6 +17,7 @@ class Indicator(IndicatorBase, table=True):
     name: str
     action_id: Optional[int] = Field(default=None, foreign_key="action.id")
     interval: int = Field(default=60)
+    parametre: Optional[dict] = Field(default=None, sa_column=Column(JSON, nullable=True))
 
     def __str__(self):
         return f"#{self.id} | Indicator {self.name} for host_id {self.host_id}"
