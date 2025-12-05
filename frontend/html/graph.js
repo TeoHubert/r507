@@ -1,5 +1,10 @@
 async function openGraphModal(indicatorId) {
     values = await getIndicatorValues(indicatorId);
+    min_val = values.action_min_value;
+    max_val = values.action_max_value;
+    unite = values.action_unite;
+    console.log(values);
+    values = values.values;
     if (values.length === 0) {
         showToast("Erreur", "Aucune donnée disponible pour cet indicateur.");
         return;
@@ -114,9 +119,10 @@ async function openGraphModal(indicatorId) {
                     display: true,
                     title: {
                         display: true,
-                        text: 'Valeur'
+                        text: `Valeur (${unite})`
                     },
-                    beginAtZero: true
+                    min: min_val,
+                    max: max_val
                 }
             },
             plugins: {
