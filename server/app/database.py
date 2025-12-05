@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, create_engine
 
-sqlite_file_name = "supervision.db"
+sqlite_file_name = "/app/data/supervision.db"
 
 sqlite_url = f"sqlite:///{sqlite_file_name}"
 
