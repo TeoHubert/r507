@@ -1,0 +1,17 @@
+services:
+  router:
+    image: aguacero7/frr-router:latest
+    container_name: router
+    hostname: test-router-1
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - NET_RAW
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv6.conf.all.forwarding=0
+    ports:
+      - "22222:22"
+    volumes:
+      - ./vtysh.conf:/etc/frr/vtysh.conf
