@@ -142,6 +142,11 @@ def update_action(action_id: int, updated_action: Action) -> Action:
         if not action: raise HTTPException(status_code=404, detail="Action not found")
         action.name = updated_action.name if updated_action.name else action.name
         action.script_path = updated_action.script_path if updated_action.script_path else action.script_path
+        action.min_value = updated_action.min_value if updated_action.min_value is not None else action.min_value
+        action.max_value = updated_action.max_value if updated_action.max_value is not None else action.max_value
+        action.ssh_error_default_value = updated_action.ssh_error_default_value if updated_action.ssh_error_default_value is not None else action.ssh_error_default_value
+        action.unite = updated_action.unite if updated_action.unite else action.unite
+        action.rounding = updated_action.rounding if updated_action.rounding is not None else action.rounding
         session.add(action)
         session.commit()
         session.refresh(action)
