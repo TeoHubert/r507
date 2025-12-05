@@ -1,5 +1,6 @@
 from typing import Optional, Tuple
 from sqlmodel import Field, SQLModel
+from sqlalchemy import Column, JSON
 
 class Action(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -10,6 +11,7 @@ class Action(SQLModel, table=True):
     ssh_error_default_value: Optional[float] = Field(default=0)
     unite: Optional[str] = Field(default="%")
     rounding: Optional[int] = Field(default=2)
+    labels: Optional[dict] = Field(default=None, sa_column=Column(JSON, nullable=True))
 
     # Retourne un tuple (value, unite, error_message)
     def exec_script(self, host, parametre: Optional[str] = None) -> Tuple[Optional[float], Optional[str], Optional[str]]:
