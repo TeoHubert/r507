@@ -162,10 +162,11 @@ def update_action(action_id: int, updated_action: Action) -> Action:
 def get_host_indicators(host_id: int) -> list[IndicatorWithLastValue]:
     with Session(engine) as session:
         indicators = session.exec(select(Indicator).where(Indicator.host_id == host_id)).all()
+        action = session.get(Action, indicators[0].action_id) if indicators else None
         result_liste = []
         for indicator in indicators:
             last_value = session.exec(select(IndicatorValue).where(IndicatorValue.indicator_id == indicator.id).order_by(IndicatorValue.date.desc()).limit(1)).first()
-            result_liste.append(IndicatorWithLastValue(**indicator.model_dump(), last_value=last_value))
+            result_liste.append(IndicatorWithLastValue(**indicator.model_dump(), last_value=last_value, action_min_value=action.min_value if action else None, action_max_value=action.max_value if action else None, action_unite=action.unite if action else None, action_labels=action.labels if action else None))
         return result_liste
     
 @app.post("/host/{host_id}/indicator")

@@ -30,3 +30,7 @@ class Indicator(IndicatorBase, table=True):
 class IndicatorWithLastValue(IndicatorBase):
     id: Optional[int] = None
     last_value: Optional[IndicatorValue] = None
+    action_min_value: Optional[float] = None
+    action_max_value: Optional[float] = None
+    action_unite: Optional[str] = None
+    action_labels: Optional[dict] = None
