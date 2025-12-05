@@ -169,7 +169,7 @@
                     <tr>
                         <td>${indicator.name}</td>
                         <td>${dateFrancaise}</td>
-                        <td>${indicator.last_value.value}</td>
+                        <td>${indicator.last_value.value}${indicator.action_unite ? indicator.action_unite : ''} ${indicator.action_labels && indicator.action_labels[indicator.last_value.value] ? `(${indicator.action_labels[indicator.last_value.value]})` : ''}</td>
                         <td>
                             <button class="btn btn-sm btn-primary" onclick="checkIndicator(${indicator.id},${host_Id})"><i class="fas fa-check"></i></button>
                             <a class="btn btn-sm btn-outline-dark" data-bs-toggle="collapse" onClick="openGraphModal(${indicator.id})" role="button" aria-expanded="false" aria-controls="collapseExample"><i class="fas fa-chart-bar"></i></a>
